@@ -1,0 +1,289 @@
+---
+title: "Class 9: Halloween Candy Mini-Project"
+author: "Jeremy Pham (A16830268)"
+format: pdf
+toc: true
+---
+
+Today we will take a small step back to some data we can taste and explore the correlation structure and principal components of some Halloween candy.
+
+
+## Data Import
+
+
+```{r}
+candy_file <- "candy-data.txt"
+
+candy = read.csv(candy_file, row.names=1)
+head(candy)
+```
+
+> Question 1: How many different candy types are in this dataset?
+
+```{r}
+dim(candy)
+nrow(candy)
+```
+There are 12 different candy types in this dataset.
+
+> Question 2: How many fruity candy types are in the dataset?
+
+```{r}
+table(sum(candy$fruity == 1))
+```
+## What is your favorite candy?
+
+> Question 3: What is your favorite candy in the dataset and what is it's winpercent value?
+
+```{r}
+candy["Starburst",]$winpercent
+```
+> Question 4: What is the winpercent value for "Kitkat"
+
+```{r}
+candy["Kit Kat",]$winpercent
+```
+> Question 5: What is the winpercent value for “Tootsie Roll Snack Bars”?
+
+```{r}
+candy["Tootsie Roll Snack Bars",]$winpercent
+```
+
+## Exploratory Analysis
+
+We can use the **skimr** package to get a quick overview of a given dataset. This can be useful for the first time you encounter a new dataset.
+
+```{r}
+skimr::skim(candy)
+# the '::' tells R to go into the package to look for the function isntead of pulling up the whole thing as we do with 'libary()'
+```
+
+> Question 6: Is there any variable/column that looks to be on a different scale to the majority of the other columns in the dataset?
+
+It looks like the last column `candy$winpercent` is on a different scale to all others.
+
+> Question 7: What do you think a zero and one represent for the candy$chocolate column?
+
+>Question 8. Plot a histogram of winpercent values
+
+```{r}
+hist(candy$winpercent,)
+```
+```{r}
+library (ggplot2)
+
+ggplot(candy) +
+  aes(winpercent) +
+  geom_histogram(bins=10, fill = "purple")
+```
+
+
+>Question 9. Is the distribution of winpercent values symmetrical?
+
+No
+
+>Question 10. Is the center of the distribution above or below 50%?
+
+```{r}
+summary(candy$winpercent)
+```
+The median (center of the distribution) is below 50%
+
+>Question 11. On average is chocolate candy higher or lower ranked than fruit candy?
+
+```{r}
+choc.inds <- candy$chocolate == 1
+choc.candy <- candy[choc.inds,]
+choc.win <- choc.candy$winpercent
+mean(choc.win)
+```
+```{r}
+fruity.inds <- candy$fruity == 1
+fruity.candy <- candy[fruity.inds,]
+fruity.win <- fruity.candy$winpercent
+mean(fruity.win)
+```
+
+On average, chocolate candy is ranked higher than fruity candy
+
+```{r}
+fruit.win <- candy[ as.logical(candy$fruity),]$winpercent
+#another way of writing the above code chunk, it does the same thing but is just more compressed
+```
+
+>Q12. Is this difference statistically significant?
+
+```{r}
+#t.test()
+
+ans <- t.test(choc.win, fruity.win)
+ans
+```
+Looking at the p-value of `r ans$p.value`, we can say that yes, this difference IS statistically significant!
+
+```{r}
+ans$p.value
+```
+## Overall Candy Rankings
+
+> Question What are the five least liked candy types in this set?
+
+There are two related functions that can help here, one is the classic `sort()` and `order()` 
+
+```{r}
+x <- c(5,10,1,4)
+sort(x)
+```
+```{r}
+order(x)
+```
+```{r}
+inds <- order(candy$winpercent)
+head(candy[inds,],5)
+```
+
+> Question 14: WHat are the top 5 all time favorite candy types in this set?
+
+```{r}
+tail(candy[inds,], 5)
+```
+
+```{r}
+inds <- order(candy$winpercent, decreasing = T)
+head(candy[inds,],5)
+```
+
+> Question 15: Make a first barplot of candy ranking based on winpercent values
+
+Make a bar plot with ggplot and order it by winpercent values
+
+```{r}
+library(ggplot2)
+ggplot(candy) +
+  aes(winpercent, rownames(candy)) +
+  geom_col()
+```
+
+> Question 16: Use the reorder() function
+
+```{r}
+ggplot(candy) +
+  aes(winpercent, reorder(rownames(candy), winpercent)) +
+  geom_col()
+```
+
+```{r}
+ggplot(candy) +
+  aes(winpercent, reorder(rownames(candy), winpercent)) +
+  geom_col(fill="red")
+```
+
+```{r}
+ggplot(candy) +
+  aes(x = winpercent,
+      y = reorder(rownames(candy), winpercent),
+      fill=chocolate) +
+  geom_col()
+```
+
+Here we want a custom color vector to color each bar the way we want - with `chocolate` and `fruity` candy together with whether it is a `bar` or not
+
+```{r}
+mycols <- rep("black", nrow(candy))
+mycols[as.logical(candy$chocolate)] <- "chocolate"
+mycols[as.logical(candy$fruity)] <- "pink"
+mycols[as.logical(candy$bar)] <- "brown"
+ 
+
+ggplot(candy) +
+  aes(winpercent, reorder(rownames(candy), winpercent)) +
+  geom_col(fill=mycols)
+
+ggsave("mybarplot.png", width = 3, height = 6)
+```
+
+![My silly barplot](mybarplot.png)
+
+> Question: 17. What is the worst ranked chocolate candy?
+
+Sixlets
+
+> Question 18. What is the best ranked fruity candy?
+
+## Taking a look at pricepercent
+
+```{r}
+# Pink is too light
+mycols[as.logical(candy$fruity)] <- "red"
+library(ggrepel)
+
+# How about a plot of price vs win
+ggplot(candy) +
+  aes(winpercent, pricepercent, label=rownames(candy)) +
+  geom_point(col=mycols) + 
+  geom_text_repel(col=mycols, size=3.3, max.overlaps = 8)
+```
+
+## Exploring the Correlation Structure
+
+```{r}
+cij <- cor(candy)
+cij
+```
+
+```{r}
+library(corrplot)
+
+corrplot(cij)
+```
+> Question 22: Examining this plot what two variables are anto-correlated (have minus values)
+
+Chocolate and fruity are negatively correlated
+
+```{r}
+round( cij["chocolate", "fruity"], 2 )
+```
+
+> Question 23: What two variables are most positively correlated?
+
+Chocolate and bar
+
+## Principal Component Analysis (PCA)
+
+We need to be sure to scale our input `candy` data before PCA as we have the `winpercent` column on a different scale to all others in the dataset.
+
+```{r}
+pca <- prcomp(candy, scale = T)
+summary(pca)
+```
+
+First main result figure is my "PCA plot"
+
+```{r}
+#pca$x
+ggplot(pca$x) + 
+  aes(PC1, PC2, label = rownames(pca$x)) +
+  geom_point(col=mycols) +
+  geom_text_repel(max.overlaps = 6, col=mycols) +
+  theme_bw() 
+  
+```
+
+The second main PCA result is in the `pca$rotation` we can plot this to generate a so-called "loadings" plot. 
+
+```{r}
+#pca$rotation
+
+ggplot(pca$rotation) +
+  aes(PC1, rownames(pca$rotation)) +
+  geom_col()
+```
+```{r}
+ggplot(pca$rotation) +
+  aes(PC1, reorder(rownames(pca$rotation), PC1), fill = PC1) +
+  geom_col()
+```
+> Question 24: What original variables are picked up strongly by PC1 in the positive direction? DO these make sense to you?
+
+Fruity, pluribus, and hard. 
+
