@@ -11,4 +11,4 @@ My classwork from [BIMM 143 Spring 2025](https://bioboot.github.io/bimm143_S25/)
 
 - 08 [Breast Cancer Mini Project](https://github.com/jpham4735/BIMM143_github/blob/main/Class08_MiniProject/Class08_Breast_Cancer_MiniProject.md)
 
--09 [Halloween Candy Mini Project](https://github.com/jpham4735/BIMM143_github/blob/main/Class09/Class-09-Halloween-Candy-Minilab.md)
+- 09 [Halloween Candy Mini Project](https://github.com/jpham4735/BIMM143_github/blob/main/Class09/Class-09-Halloween-Candy-Minilab.md)
